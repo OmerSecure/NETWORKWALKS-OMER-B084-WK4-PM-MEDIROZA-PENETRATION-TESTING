@@ -144,11 +144,76 @@ Disallow: /old/
 
 ### 4.2 Milestone 1: Initial Access (M1)
 
+**Objective:** Attack the website and retrieve 3 confidential patient PDF lab reports.
 
+**Steps Performed and Proof of Work:**
+
+1. **Target Selection:** Based on the `robots.txt` finding, navigated to `https://medirozahospital.com/patient/`. The directory listing revealed a `login.php` page.
+<img src="screenshots/M1/1-patient-directory.png">
+
+2. **User Enumeration:** Tested the login page. The application returned different error messages for invalid usernames ("`Username not found`") versus valid usernames ("Incorrect password"), confirming the `admin` account exists.
+<img src="screenshots/M1/2-User-Enumeration.png">
+
+3. **SQL Injection Testing:** Entered a single quote `'` in the username field, which returned a MySQL syntax error (`Warning: mysqli_query()...`). This confirmed the input is not sanitized.
+```text
+Warning: mysqli_query(): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''' at line 1
+```
+
+4. **Authentication Bypass:** Used the payload `admin'--` in the Username field and any password. The SQL query likely looked like `SELECT * FROM users WHERE username = 'admin'-- ' AND password = '...'`. The `--` comments out the password check, granting access.
+
+5. **Data Extraction:** Successfully accessed the patient portal and downloaded 3 encrypted PDF files: `patient_report_1.pdf`, `patient_report_2.pdf`, and `patient_report_3.pdf`.
+<img src="screenshots/M1/5-Data-Extraction.png">
 
 
 ### 4.3 Milestone 2: Data Extraction (M2)
 
+**Objective:** Crack the encryption on all 3 retrieved PDF files.
+
+**Steps Performed and Proof of Work:**
+
+1. **Hash Extraction:** Used the [NetworkWalks Hash Calculator](https://networkwalks.com/hash-calculator/) (or `pdf2john` in Kali) to extract the `$pdf$` hashes from the 3 files.
+```bash
+pdf2john patient_report_1.pdf > hash1.txt
+pdf2john patient_report_2.pdf > hash2.txt
+pdf2john patient_report_3.pdf > hash3.txt
+```
+<img src="screenshots/M2/1-hash-calculator.png">
+
+
+2. **Password Cracking:** Used the [NetworkWalks Password Cracker](https://networkwalks.com/password-cracker/) (or PDFcrack Tool) with a dictionary attack.
+```bash
+pdfcrack -f patient_report_1.pdf /usr/share/wordlists/rockyou.txt
+pdfcrack -f patient_report_2.pdf /usr/share/wordlists/rockyou.txt
+pdfcrack -f patient_report_3.pdf /usr/share/wordlists/rockyou.txt
+```
+
+> Crack report 3: When I tried a small wordlist fails, meaning the password is not among the most common ones. The solution then is to try a larger wordlist that covers more possibilities.
+
+* **Crack patient_report_1**
+  <img src="screenshots/M2/2-Password-Cracking-report_1.png">
+
+* **Crack patient_report_2**
+  <img src="screenshots/M2/2-Password-Cracking-report_2.png">
+
+* **Crack patient_report_3**
+  <img src="screenshots/M2/2-Password-Cracking-report_3.png">
+
+- Results:
+   - `patient_report_1.pdf` → `123456`
+   - `patient_report_2.pdf` → `password`
+   - `patient_report_3.pdf` → `!@#$%^&`
+
+
+3. **Validation:** Opened the PDFs using the recovered passwords. The reports exposed patient names, dates of birth, referring doctors, and laboratory results.
+
+* **Opened patient_report_1.pdf**
+  <img src="screenshots/M2/3-opened-patient_report_1.png">
+
+* **Opened patient_report_2.pdf**
+  <img src="screenshots/M2/3-opened-patient_report_2.png">
+
+* **Opened patient_report_3.pdf**
+  <img src="screenshots/M2/3-opened-patient_report_3.png">
 
 
 ### 4.4 Milestone 3: Critical Data Exposure (M3)
@@ -195,7 +260,6 @@ During Week 4 of my Cybersecurity & Ethical Hacking internship, I conducted a fu
   <img src="screenshots/Recon/3-curl-headers.png" alt="3- curl-headers">
 
 * **4- wafw00f:**
-screenshots/Recon/4-robots-txt.png
   <img src="screenshots/Recon/4-wafw00f.png" alt="4- wafw00f">
 
 * **5- robots.txt and Nikto scan:**
