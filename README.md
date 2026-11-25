@@ -249,12 +249,12 @@ grep -i "shareholder" mediroza_db_backup_2019.sql
 
 | # | Vulnerability | Evidence / Observation | Potential Impact | Risk Level |
 |---|---|---|---|---|
-| 1 | SQL Injection | Authentication bypass on /patient/login.php using admin'-- | Attackers can access patient data without credentials. | Critical |
-| 2 | Sensitive Data Exposure | Public 2019 database backup (mediroza_db_backup_2019.sql) in /old/ | Full compromise of staff PII, salaries, and shareholder data. | Critical |
-| 3 | Directory Listing Enabled | Directory indexing on /staff/, /patient/, /old/ | Allows attackers to browse and download sensitive files. | High |
-| 4 | Weak Password Protection | PDF passwords cracked in seconds (123456, password) | Patient confidentiality is breached. | High |
+| 1 | SQL Injection | Authentication bypass on `/patient/login.php` using `admin'--` | Attackers can access patient data without credentials. | Critical |
+| 2 | Sensitive Data Exposure | Public 2019 database backup (`mediroza_db_backup_2019.sql`) in `/old/` | Full compromise of staff PII, salaries, and shareholder data. | Critical |
+| 3 | Directory Listing Enabled | Directory indexing on `/staff/`, `/patient/`, `/old/` | Allows attackers to browse and download sensitive files. | High |
+| 4 | Weak Password Protection | PDF passwords cracked in seconds (`123456`, `password`, `!@#$%^&`) | Patient confidentiality is breached. | High |
 | 5 | Username Enumeration | Different error messages for valid/invalid users. | Facilitates targeted brute-force attacks. | Medium |
-| 6 | DMARC Not Enforced | DMARC policy set to p=none | Domain is vulnerable to email spoofing/phishing. | Low |
+| 6 | DMARC Not Enforced | DMARC policy set to `p=none` | Domain is vulnerable to email spoofing/phishing. | Low |
 
 
 ## 6. Recommendations
