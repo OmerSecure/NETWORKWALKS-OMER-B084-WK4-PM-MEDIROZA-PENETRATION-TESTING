@@ -10,7 +10,7 @@
 | :--- | :--- |
 | Pentester Name | Omer Khalid Omer Ali Bawazir |
 | Program/Batch | B084-Networkwalks |
-| Date | 25 November 2026 |
+| Date | 26 November 2026 |
 | Modules completed | W4-PM (Milestones 1, 2, 3 & 4) |
 | Client/Target | Mediroza General Hospital (https://medirozahospital.com) |
 | Permission secured from client? | Yes (Written authorization granted by Networkwalks) |
@@ -218,10 +218,43 @@ pdfcrack -f patient_report_3.pdf /usr/share/wordlists/rockyou.txt
 
 ### 4.4 Milestone 3: Critical Data Exposure (M3)
 
+**Objective:** Find the salaries of all hospital employees and the shareholder details.
+
+**Steps Performed and Proof of Work:**
+
+1. **Investigating Exposed Directories:** Following the Nikto findings, navigated to `https://medirozahospital.com/old/` which had directory indexing enabled.
+
+
+2. **Database Discovery:** Found an exposed, publicly downloadable database backup file: `mediroza_db_backup_2019.sql`.
+<img src="screenshots/M3/1-db-backup.png">
+
+
+3. **Data Extraction:** Downloaded the `.sql` file and used `grep` to extract sensitive information:
+```bash
+wget https://medirozahospital.com/old/mediroza_db_backup_2019.sql
+
+grep -i "salary" mediroza_db_backup_2019.sql
+grep -i "shareholder" mediroza_db_backup_2019.sql
+```
+<img src="screenshots/M3/2-db-backup.png">
+
+
+4. **Findings:**
+
+- Staff Records: Extracted names, emails, phone numbers, National ID numbers, and salaries.
+- Shareholder Register: Extracted names, shareholding percentages, and share classes.
 
 
 ## 5. Risk Analysis / Impact
 
+| # | Vulnerability | Evidence / Observation | Potential Impact | Risk Level |
+|---|---|---|---|---|
+| 1 | SQL Injection | Authentication bypass on /patient/login.php using admin'-- | Attackers can access patient data without credentials. | Critical |
+| 2 | Sensitive Data Exposure | Public 2019 database backup (mediroza_db_backup_2019.sql) in /old/ | Full compromise of staff PII, salaries, and shareholder data. | Critical |
+| 3 | Directory Listing Enabled | Directory indexing on /staff/, /patient/, /old/ | Allows attackers to browse and download sensitive files. | High |
+| 4 | Weak Password Protection | PDF passwords cracked in seconds (123456, password) | Patient confidentiality is breached. | High |
+| 5 | Username Enumeration | Different error messages for valid/invalid users. | Facilitates targeted brute-force attacks. | Medium |
+| 6 | DMARC Not Enforced | DMARC policy set to p=none | Domain is vulnerable to email spoofing/phishing. | Low |
 
 
 ## 6. Recommendations
@@ -268,12 +301,72 @@ During Week 4 of my Cybersecurity & Ethical Hacking internship, I conducted a fu
 
 ### M1: Initial Access
 
-screenshots/M1/2-sqli-bypass.png
+* **1- The directory listing `https://medirozahospital.com/patient/`:**
+  <img src="screenshots/M1/1-patient-directory.png">
 
-screenshots/M1/3-portal-access.png
+* **2- User Enumeration:**
+  <img src="screenshots/M1/2-User-Enumeration.png">
+
+* **3- SQL Injection Testing:**
+```payload
+'
+```
+
+* **4- Authentication Bypass:**
+```payload
+admin'--
+```
+
+* **5- Data Extraction:**
+  <img src="screenshots/M1/5-Data-Extraction.png">
+
 
 ### M2: Data Extraction
+
+* **1- Hash Extraction:**
+```bash
+pdf2john patient_report_1.pdf > hash1.txt
+pdf2john patient_report_2.pdf > hash2.txt
+pdf2john patient_report_3.pdf > hash3.txt
+```
+<img src="screenshots/M2/1-hash-calculator.png">
+
+
+* **2.1- Crack patient_report_1**
+  <img src="screenshots/M2/2-Password-Cracking-report_1.png">
+
+* **2.2- Crack patient_report_2**
+  <img src="screenshots/M2/2-Password-Cracking-report_2.png">
+
+* **2.3- Crack patient_report_3**
+  <img src="screenshots/M2/2-Password-Cracking-report_3.png">
+
+
+* **3.1- Opened patient_report_1.pdf**
+  <img src="screenshots/M2/3-opened-patient_report_1.png">
+
+* **3.2- Opened patient_report_2.pdf**
+  <img src="screenshots/M2/3-opened-patient_report_2.png">
+
+* **3.3- Opened patient_report_3.pdf**
+  <img src="screenshots/M2/3-opened-patient_report_3.png">
 
 
 ### M3: Critical Data Exposure
 
+Database Backup File: <img src="screenshots/M3/1-db-backup.png">
+
+
+* **1- Investigating Exposed Directories `https://medirozahospital.com/old/`:**
+  <img src="screenshots/M3/1-db-backup.png">
+
+
+* **2- SQL Data Extraction:**
+  <img src="screenshots/M3/2-db-backup.png">
+
+```bash
+wget https://medirozahospital.com/old/mediroza_db_backup_2019.sql
+
+grep -i "salary" mediroza_db_backup_2019.sql
+grep -i "shareholder" mediroza_db_backup_2019.sql
+```
